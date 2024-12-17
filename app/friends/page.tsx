@@ -10,8 +10,8 @@ import friends from '~/json/friends.json' assert { type: 'json' }
 export const metadata = genPageMetadata({ title: 'My friends and tech bloggers' })
 
 export default async function HomePage() {
-  const friendsList = friends.filter((f) => f.type === 'friend')
-  const bloggersList = friends.filter((f) => f.type === 'techStar')
+  // const friendsList = friends.filter((f) => f.type === 'friend')
+  // const bloggersList = friends.filter((f) => f.type === 'techStar')
   return (
     // <Home
     //   posts={allCoreContent(sortPosts(allBlogs)).slice(0, MAX_POSTS_DISPLAY)}
@@ -28,7 +28,7 @@ export default async function HomePage() {
           Friends
         </h3>
         <div className="space-y-16">
-          <FriendsList friends={friendsList} />
+          <FriendsList friends={[]} />
         </div>
       </div>
       <div className="mt-6 border-t border-gray-200 py-5 dark:border-gray-700 md:mt-10 md:py-10">
@@ -36,7 +36,7 @@ export default async function HomePage() {
           Technical bloggers
         </h3>
         <div className="space-y-16">
-          <FriendsList friends={bloggersList} />
+          <FriendsList friends={[]} />
         </div>
       </div>
     </Container>
