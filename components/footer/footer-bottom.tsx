@@ -13,11 +13,12 @@ export function FooterBottom() {
         'border-t border-gray-200 dark:border-gray-700',
       ])}
     >
-      <SpotifyNowPlaying
+      {/* <SpotifyNowPlaying
         className="w-full justify-center truncate [--artist-color:theme(colors.gray.500)] md:max-w-[50%] md:justify-start"
         songEffect="underline"
         showCover
-      />
+      /> */}
+      <div className="w-full" />
       <div className="flex items-center">
         <Link href="/feed.xml" aria-label="RSS Feed" data-umami-event="rss-feed" prefetch={false}>
           <Rss strokeWidth={1.5} size={20} />

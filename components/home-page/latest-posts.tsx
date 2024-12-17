@@ -33,8 +33,8 @@ export function LatestPosts({
           >
             <GrowingUnderline data-umami-event="latest-posts">posts</GrowingUnderline>
           </button>
-          <span className="mx-1">/</span>
-          <button
+          {/* <span className="mx-1">/</span> */}
+          {/* <button
             className={clsx(
               'underline-offset-4 transition-colors',
               view === 'snippets'
@@ -44,7 +44,7 @@ export function LatestPosts({
             onClick={() => setView('snippets')}
           >
             <GrowingUnderline data-umami-event="latest-snippets">snippets</GrowingUnderline>
-          </button>
+          </button> */}
         </div>
         <div className="flex items-center justify-end text-base font-medium leading-6">
           <Link href={view === 'posts' ? '/blog' : '/snippets'} className="" aria-label="All posts">

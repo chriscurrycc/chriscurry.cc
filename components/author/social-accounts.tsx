@@ -17,7 +17,7 @@ export function SocialAccounts({ className }: { className?: string }) {
         <span className="sr-only">Github</span>
         <Github strokeWidth={1.5} />
       </a>
-      <a
+      {/* <a
         href={AUTHOR_INFO.social.linkedin}
         target="_blank"
         data-umami-event="contact-linkedin"
@@ -26,7 +26,7 @@ export function SocialAccounts({ className }: { className?: string }) {
       >
         <span className="sr-only">Linkedin</span>
         <Linkedin strokeWidth={1.5} />
-      </a>
+      </a> */}
       <a
         href={`mailto:${AUTHOR_INFO.email}`}
         target="_self"
@@ -37,7 +37,7 @@ export function SocialAccounts({ className }: { className?: string }) {
         <span className="sr-only">Mail</span>
         <Mail strokeWidth={1.5} />
       </a>
-      <a
+      {/* <a
         href={AUTHOR_INFO.social.juejin}
         target="_self"
         data-umami-event="contact-mail"
@@ -46,7 +46,7 @@ export function SocialAccounts({ className }: { className?: string }) {
       >
         <span className="sr-only">Juejin</span>
         <Juejin strokeWidth={1.5} className="h-6 w-6" />
-      </a>
+      </a> */}
       {/* <a
         href={SITE_METADATA.x}
         target="_blank"

@@ -23,18 +23,16 @@ export function Home({
           <Greeting />
           <div className="text-base leading-7 text-gray-600 dark:text-gray-400 md:text-lg md:leading-8">
             <Intro />
-            <TypedBios />
+            {/* <TypedBios /> */}
             <div className="mb-6 mt-4 md:mb-8">
-              <p>I started learning to code in 2015 and have been hooked ever since.</p>
-              <p>I landed my first job as a Web developer in 2020.</p>
-              <p>I have a passion for JS/TS, web dev.</p>
-              <p>I started this blog to document and share my knowledge & experience.</p>
+              <p>This blog site is under construction.</p>
+              <p>Please come back later.</p>
             </div>
-            <BlogLinks />
-            <p className="my-6 flex md:my-8">
+            {/* <BlogLinks /> */}
+            {/* <p className="my-6 flex md:my-8">
               <span className="mr-2">Happy reading</span>
               <Twemoji emoji="clinking-beer-mugs" />
-            </p>
+            </p> */}
           </div>
         </div>
         <div className="hidden pl-4 pt-8 xl:block">

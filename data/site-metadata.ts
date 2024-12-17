@@ -1,13 +1,12 @@
 export const SITE_METADATA = {
-  title: `Mengke's blog - Mengke's coding journey`,
-  author: 'Mengke',
-  headerTitle: `Mengke's blog`,
-  description:
-    'A personal space on the cloud where I document my programming journey, sharing lessons, insights, and resources for fellow developers.',
+  title: `Chris Curry's blog - Chris Curry's digital garden`,
+  author: 'Chris Curry',
+  headerTitle: `Chris Curry's blog`,
+  description: 'A personal digital garden where I document my learning and experiences.',
   language: 'en-us',
   theme: 'system', // system, dark or light
-  siteUrl: 'https://www.mengke.me',
-  siteRepo: 'https://github.com/mk965/mengke.me',
+  siteUrl: 'https://www.chriscurry.cc',
+  siteRepo: 'https://github.com/chriscurrycc/chriscurry.cc',
   siteLogo: `${process.env.BASE_PATH || ''}/static/images/profile.webp`,
   socialBanner: `${process.env.BASE_PATH || ''}/static/images/twitter-card.jpeg`,
 
@@ -16,7 +15,7 @@ export const SITE_METADATA = {
   analytics: {
     umamiAnalytics: {
       websiteId: process.env.NEXT_UMAMI_ID,
-      shareUrl: 'https://analytics.eu.umami.is/share/EqvpZYPABxaQA3mr/mengke.me',
+      shareUrl: 'https://analytics.eu.umami.is/share/EqvpZYPABxaQA3mr/chriscurry.cc',
     },
   },
   newsletter: {

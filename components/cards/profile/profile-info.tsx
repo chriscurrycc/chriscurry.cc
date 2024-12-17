@@ -29,13 +29,13 @@ const SOCIALS = [
   //   Icon: () => <Linkedin size={20} strokeWidth={1.5} />,
   //   umamiEvent: 'profile-card-linkedin',
   // },
-  {
-    platform: 'juejin',
-    handle: getAccountHandle(AUTHOR_INFO.social.juejin),
-    href: AUTHOR_INFO.social.juejin,
-    Icon: () => <JuejinIcon className="h-5 w-5" />,
-    umamiEvent: 'profile-card-x',
-  },
+  // {
+  //   platform: 'juejin',
+  //   handle: getAccountHandle(AUTHOR_INFO.social.juejin),
+  //   href: AUTHOR_INFO.social.juejin,
+  //   Icon: () => <JuejinIcon className="h-5 w-5" />,
+  //   umamiEvent: 'profile-card-x',
+  // },
 ]
 
 export function ProfileCardInfo() {

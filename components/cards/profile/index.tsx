@@ -73,13 +73,13 @@ export function ProfileCard() {
           }}
           loading="eager"
         />
-        <SpotifyNowPlaying
+        {/* <SpotifyNowPlaying
           className={clsx([
             'bg-gray-900 px-3 py-1.5 xl:px-5',
             '[--song-color:theme(colors.gray.200)]',
             '[--artist-color:theme(colors.gray.400)]',
           ])}
-        />
+        /> */}
         <ProfileCardInfo />
         <span className="h-1.5 bg-gradient-to-r from-green-300 via-blue-500 to-purple-600" />
       </div>
