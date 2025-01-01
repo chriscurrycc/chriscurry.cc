@@ -1,5 +1,6 @@
 import 'css/tailwind.css'
 import 'css/twemoji.css'
+import 'css/prism.css'
 import 'react-medium-image-zoom/dist/styles.css'
 import 'remark-github-blockquote-alert/alert.css'
 
