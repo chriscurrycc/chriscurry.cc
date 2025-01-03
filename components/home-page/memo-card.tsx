@@ -18,21 +18,36 @@ function processContent(content: string) {
   )
 }
 
-// Add copy button to code blocks
+// Setup copy button for code blocks
 function setupCodeCopyButtons(container: HTMLElement) {
   const codeBlocks = container.querySelectorAll('pre')
   codeBlocks.forEach((pre) => {
-    // Add relative positioning to pre
-    pre.classList.add('relative')
+    const wrapper = document.createElement('div')
+    wrapper.className = 'relative group/code'
+    pre.parentNode?.insertBefore(wrapper, pre)
+    wrapper.appendChild(pre)
 
-    // Create copy button
     const button = document.createElement('button')
     button.className =
-      'absolute right-2 top-2 rounded bg-white/90 px-2 py-1 text-xs font-medium text-zinc-600 opacity-0 transition-all hover:bg-white group-hover:opacity-100 dark:bg-zinc-700/70 dark:text-zinc-200 dark:hover:bg-zinc-700'
+      'absolute right-2 top-2 rounded bg-white/90 px-2 py-1 text-xs font-medium text-zinc-600 opacity-0 transition-all hover:bg-white group-hover/code:opacity-100 dark:bg-zinc-700/70 dark:text-zinc-200 dark:hover:bg-zinc-700 z-10 md:block'
     button.textContent = 'Copy'
 
-    // Add click handler
-    button.addEventListener('click', async () => {
+    let isButtonVisible = false
+    pre.addEventListener('click', (e) => {
+      if (window.innerWidth < 768) {
+        if (!isButtonVisible) {
+          e.preventDefault()
+          button.style.opacity = '1'
+          isButtonVisible = true
+        } else if (!button.contains(e.target as Node)) {
+          button.style.opacity = '0'
+          isButtonVisible = false
+        }
+      }
+    })
+
+    button.addEventListener('click', async (e) => {
+      e.stopPropagation()
       const code = pre.querySelector('code')?.textContent || ''
       await navigator.clipboard.writeText(code)
       button.textContent = 'Copied!'
@@ -40,10 +55,14 @@ function setupCodeCopyButtons(container: HTMLElement) {
       setTimeout(() => {
         button.textContent = 'Copy'
         button.classList.remove('!bg-emerald-500/90', '!text-white')
+        if (window.innerWidth < 768) {
+          button.style.opacity = '0'
+          isButtonVisible = false
+        }
       }, 2000)
     })
 
-    pre.appendChild(button)
+    wrapper.appendChild(button)
   })
 }
 
@@ -52,12 +71,10 @@ function setupImagePreviews(container: HTMLElement) {
   const images = container.querySelectorAll('img[data-preview]')
   images.forEach((img) => {
     img.addEventListener('click', () => {
-      // Create preview overlay
       const overlay = document.createElement('div')
       overlay.className =
         'fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm cursor-zoom-out'
 
-      // Create preview image
       const preview = img.cloneNode(true) as HTMLImageElement
       preview.className = 'rounded-lg'
       preview.style.maxWidth = '90vw'
@@ -66,14 +83,12 @@ function setupImagePreviews(container: HTMLElement) {
       preview.style.maxHeight = '90vh'
       preview.style.cursor = 'default'
 
-      // Close preview when clicking outside
       overlay.addEventListener('click', (e) => {
         if (e.target === overlay) {
           overlay.remove()
         }
       })
 
-      // Close preview with Escape key
       const handleKeyDown = (e: KeyboardEvent) => {
         if (e.key === 'Escape') {
           overlay.remove()
@@ -88,18 +103,18 @@ function setupImagePreviews(container: HTMLElement) {
   })
 }
 
-// Add click-to-preview functionality to images
+// Handle image preview in markdown
 function rehypeImagePreview() {
   return (tree: any) => {
     visit(tree, 'element', (node) => {
       if (node.tagName === 'img') {
         const { src, alt = '' } = node.properties
         node.tagName = 'div'
-        node.properties = { className: 'my-4' }
+        node.properties = { className: 'my-1.5' }
         node.children = [
           {
             type: 'raw',
-            value: `<img data-preview src="${src}" alt="${alt}" class="rounded-lg cursor-zoom-in" />`,
+            value: `<img data-preview src="${src}" alt="${alt}" class="rounded-lg cursor-zoom-in my-1.5" />`,
           },
         ]
       }
@@ -107,8 +122,46 @@ function rehypeImagePreview() {
   }
 }
 
+// Handle line breaks in markdown
+function remarkHandleLineBreaks() {
+  return (tree: any) => {
+    visit(tree, (node) => {
+      if (node.type === 'code') return
+
+      if (node.type === 'paragraph') {
+        node.children = node.children.reduce((acc: any[], child: any) => {
+          if (child.type === 'text') {
+            const parts = child.value.split('\n').filter(Boolean)
+            const nodes = parts.map((part: string) => ({
+              type: 'text',
+              value: part,
+            }))
+
+            const result = nodes.reduce((acc2: any[], node: any, i: number) => {
+              if (node.value) {
+                if (i > 0) {
+                  acc2.push({
+                    type: 'html',
+                    value: '<span data-line-break class="block h-1.5"></span>',
+                  })
+                }
+                acc2.push(node)
+              }
+              return acc2
+            }, [])
+
+            return [...acc, ...result]
+          }
+          return [...acc, child]
+        }, [])
+      }
+    })
+  }
+}
+
 const processor = unified()
   .use(remarkParse)
+  .use(remarkHandleLineBreaks)
   .use(remarkGfm)
   .use(remarkRehype, {
     allowDangerousHtml: true,
@@ -142,7 +195,7 @@ export default function MemoCard({ content, createTime }: MemoCardProps) {
     <div className="group relative overflow-hidden rounded-xl bg-white/80 p-5 shadow-sm ring-1 ring-zinc-200/50 transition-all duration-300 hover:bg-white hover:shadow-md hover:ring-zinc-300 dark:bg-zinc-800/50 dark:ring-zinc-700/50 dark:hover:bg-zinc-800 dark:hover:ring-zinc-600">
       <div
         ref={contentRef}
-        className="prose prose-sm prose-neutral max-w-none dark:prose-invert prose-p:my-2 prose-blockquote:my-2 prose-pre:my-2 prose-ol:my-2 prose-ul:my-2 prose-li:my-1"
+        className="prose prose-sm prose-neutral max-w-none dark:prose-invert prose-p:my-1.5 prose-blockquote:my-1.5 prose-pre:my-1.5 prose-ol:my-1.5 prose-ul:my-1.5 prose-li:my-1.5"
         dangerouslySetInnerHTML={{ __html: html }}
       />
       <div className="mt-4 flex items-center justify-between text-xs text-gray-500 dark:text-gray-400">

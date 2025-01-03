@@ -17,7 +17,7 @@ export default function MemosGrid() {
   if (isLoading) {
     return (
       <div className="flex justify-center pt-4">
-        <Loader className="h-8 w-8 animate-spin text-gray-400" />
+        <Loader className="h-6 w-6 animate-spin text-gray-400" />
       </div>
     )
   }
