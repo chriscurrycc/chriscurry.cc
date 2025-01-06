@@ -9,9 +9,10 @@ const fetcher = (url: string) => fetch(url).then((res) => res.json())
 
 export default function MemosGrid() {
   const { data: memos, isLoading } = useSWR<Memo[]>('/api/memos', fetcher, {
+    dedupingInterval: 1000 * 60 * 60 * 24,
+    revalidateIfStale: true,
     revalidateOnFocus: false,
     revalidateOnReconnect: false,
-    dedupingInterval: 1000 * 60 * 60,
   })
 
   if (isLoading) {
