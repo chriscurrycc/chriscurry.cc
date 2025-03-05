@@ -43,7 +43,7 @@ export function LatestPosts({ posts }: { posts: CoreContent<Blog>[] }) {
         </div>
         <div className="flex items-center justify-end text-base font-medium leading-6">
           <Link
-            href={view === 'posts' ? '/blog' : 'https://memo.chriscurry.cc/u/chriscurry'}
+            href={view === 'posts' ? '/blog' : 'https://memo.chriscurry.cc/u/chriscurrycc'}
             className=""
             aria-label="All posts"
           >
