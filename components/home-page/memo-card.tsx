@@ -195,7 +195,7 @@ export default function MemoCard({ content, createTime }: MemoCardProps) {
     <div className="group relative overflow-hidden rounded-xl bg-white/80 p-5 shadow-sm ring-1 ring-zinc-200/50 transition-all duration-300 hover:bg-white hover:shadow-md hover:ring-zinc-300 dark:bg-zinc-800/50 dark:ring-zinc-700/50 dark:hover:bg-zinc-800 dark:hover:ring-zinc-600">
       <div
         ref={contentRef}
-        className="prose prose-sm prose-neutral max-w-none dark:prose-invert prose-p:my-1.5 prose-blockquote:my-1.5 prose-pre:my-1.5 prose-ol:my-1.5 prose-ul:my-1.5 prose-li:my-1.5"
+        className="prose prose-sm prose-neutral max-w-none dark:prose-invert prose-p:my-1.5 prose-blockquote:my-1.5 prose-pre:my-1.5 prose-ol:my-1.5 prose-ul:my-1.5 prose-li:my-1.5 prose-hr:my-4"
         dangerouslySetInnerHTML={{ __html: html }}
       />
       <div className="mt-4 flex items-center justify-between text-xs text-gray-500 dark:text-gray-400">
