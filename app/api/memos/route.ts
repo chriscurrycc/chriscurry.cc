@@ -1,34 +1,5 @@
 import { getMemos } from './memos'
-
-export interface Memo {
-  name: string
-  uid: string
-  rowStatus: 'ACTIVE' | 'ARCHIVED' | 'DELETED'
-  creator: string
-  createTime: string
-  updateTime: string
-  displayTime: string
-  content: string
-  visibility: 'PUBLIC' | 'PROTECTED' | 'PRIVATE'
-  pinned: boolean
-  nodes: any[]
-  tags: string[]
-  resources: any[]
-  relations: any[]
-  reactions: any[]
-  property: {
-    tags: string[]
-    hasLink: boolean
-    hasTaskList: boolean
-    hasCode: boolean
-    hasIncompleteTasks: boolean
-  }
-  snippet: string
-}
-
-export interface MemosResponse {
-  memos: Memo[]
-}
+import type { MemosResponse } from './types'
 
 export async function GET() {
   try {
