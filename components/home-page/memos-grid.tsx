@@ -3,7 +3,7 @@
 import { Loader } from 'lucide-react'
 import useSWR from 'swr'
 import MemoCard from './memo-card'
-import type { Memo } from '~/app/api/memos/route'
+import type { Memo } from '~/app/api/memos/types'
 
 const fetcher = (url: string) => fetch(url).then((res) => res.json())
 
