@@ -10,6 +10,7 @@ import type { PetMemo } from '~/app/api/memos/types'
 import { Container } from '~/components/ui/container'
 import { Drawer } from '~/components/ui/drawer'
 import { StickyContainer } from '~/components/ui/sticky-container'
+import { Timeline, type TimelineGroup } from '~/components/ui/timeline'
 
 const fetcher = (url: string) => fetch(url).then((res) => res.json())
 
@@ -30,9 +31,7 @@ interface FlattenedNote {
   month: number | null
 }
 
-interface MonthGroup {
-  key: string
-  label: string
+interface NoteTimelineGroup extends TimelineGroup<FlattenedNote> {
   year: number | null
   month: number | null
 }
@@ -134,8 +133,8 @@ export default function PetNotesPage() {
     return { years: sortedYears, hasUnknown }
   }, [allNotes])
 
-  const monthGroups = useMemo(() => {
-    const groups = new Map<string, MonthGroup>()
+  const timelineGroups = useMemo(() => {
+    const groups = new Map<string, NoteTimelineGroup>()
 
     allNotes.forEach((note) => {
       let key: string
@@ -150,8 +149,9 @@ export default function PetNotesPage() {
       }
 
       if (!groups.has(key)) {
-        groups.set(key, { key, label, year: note.year, month: note.month })
+        groups.set(key, { key, label, year: note.year, month: note.month, items: [] })
       }
+      groups.get(key)!.items.push(note)
     })
 
     return Array.from(groups.values()).sort((a, b) => {
@@ -163,17 +163,17 @@ export default function PetNotesPage() {
   }, [allNotes])
 
   useEffect(() => {
-    if (monthGroups.length > 0 && loadedMonths.size === 0) {
-      const initialMonths = monthGroups.slice(0, 3).map((g) => g.key)
+    if (timelineGroups.length > 0 && loadedMonths.size === 0) {
+      const initialMonths = timelineGroups.slice(0, 3).map((g) => g.key)
       setLoadedMonths(new Set(initialMonths))
     }
-  }, [monthGroups, loadedMonths.size])
+  }, [timelineGroups, loadedMonths.size])
 
   useEffect(() => {
     const observerCallback = (entries: IntersectionObserverEntry[]) => {
       entries.forEach((entry) => {
         if (entry.isIntersecting) {
-          const key = entry.target.getAttribute('data-month-key')
+          const key = entry.target.getAttribute('data-group-key')
           if (key && !loadedMonths.has(key)) {
             setLoadedMonths((prev) => new Set([...prev, key]))
           }
@@ -190,10 +190,11 @@ export default function PetNotesPage() {
     })
 
     return () => observer.disconnect()
-  }, [monthGroups, loadedMonths])
+  }, [timelineGroups, loadedMonths])
 
   const scrollToYear = (year: number | 'unknown') => {
-    const targetKey = year === 'unknown' ? 'unknown' : monthGroups.find((g) => g.year === year)?.key
+    const targetKey =
+      year === 'unknown' ? 'unknown' : timelineGroups.find((g) => g.year === year)?.key
 
     if (targetKey) {
       const el = monthRefs.current.get(targetKey)
@@ -232,6 +233,12 @@ export default function PetNotesPage() {
   const clearFilters = () => {
     setSelectedPets([])
   }
+
+  const handleGroupRef = useCallback((key: string, el: HTMLDivElement | null) => {
+    if (el) {
+      monthRefs.current.set(key, el)
+    }
+  }, [])
 
   const visibleNotes = allNotes.filter(isNoteVisible)
   const totalPhotos = visibleNotes.reduce((sum, note) => sum + (note.images?.length || 0), 0)
@@ -384,114 +391,87 @@ export default function PetNotesPage() {
         </div>
       </Drawer>
 
-      <div className="relative ml-3 mt-5">
-        <div className="absolute bottom-0 left-0 top-3 w-px bg-zinc-300 dark:bg-zinc-600" />
-
-        {monthGroups.map((group) => {
-          const groupNotes = allNotes.filter((note) => {
-            const noteKey = note.year !== null ? `${note.year}-${note.month}` : 'unknown'
-            return noteKey === group.key
-          })
-
-          const visibleGroupNotes = groupNotes.filter(isNoteVisible)
-          const isGroupVisible = visibleGroupNotes.length > 0
+      <Timeline
+        groups={timelineGroups}
+        renderItem={(note, _index, group) => {
           const isLoaded = loadedMonths.has(group.key)
+          const hasImages = note.images && note.images.length > 0
 
           return (
-            <div
-              key={group.key}
-              ref={(el) => {
-                if (el) monthRefs.current.set(group.key, el)
-              }}
-              data-month-key={group.key}
-              className={clsx('relative pb-10', !isGroupVisible && 'hidden')}
-            >
-              <div className="absolute left-0 top-2 h-3 w-3 -translate-x-1/2 rounded-full border-2 border-zinc-400 bg-white dark:border-zinc-500 dark:bg-zinc-900" />
-
-              <div className="pl-8">
-                <div className="mb-5 flex items-baseline gap-3">
-                  <h3 className="text-xl font-semibold text-gray-900 dark:text-white">
-                    {group.label}
-                  </h3>
-                  <span className="text-sm text-gray-500 dark:text-gray-400">
-                    {visibleGroupNotes.length} entries ·{' '}
-                    {visibleGroupNotes.reduce((sum, n) => sum + (n.images?.length || 0), 0)} photos
-                  </span>
-                </div>
-
-                <div className="grid grid-cols-1 gap-5 min-[480px]:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
-                  {groupNotes.map((note) => {
-                    const noteVisible = isNoteVisible(note)
-                    const hasImages = note.images && note.images.length > 0
-
-                    return (
-                      <div key={note.id} className={clsx('group', !noteVisible && 'hidden')}>
-                        {hasImages ? (
-                          <PhotoProvider>
-                            <PhotoView src={note.images![0]}>
-                              <div className="relative aspect-[4/3] cursor-pointer overflow-hidden rounded-lg bg-zinc-100 ring-1 ring-zinc-200 dark:bg-zinc-800 dark:ring-zinc-700">
-                                {isLoaded && (
-                                  <img
-                                    src={getThumbnailUrl(note.images![0])}
-                                    alt=""
-                                    loading="lazy"
-                                    decoding="async"
-                                    className="h-full w-full object-cover transition-transform duration-300 hover:scale-105"
-                                  />
-                                )}
-                                {note.images!.length > 1 && (
-                                  <div className="absolute right-2 top-2 rounded bg-black/60 px-1.5 py-0.5 text-xs font-medium text-white">
-                                    +{note.images!.length - 1}
-                                  </div>
-                                )}
-                              </div>
-                            </PhotoView>
-                            {note.images!.length > 1 && (
-                              <div className="hidden">
-                                {note.images!.slice(1).map((img, idx) => (
-                                  <PhotoView key={idx} src={img} />
-                                ))}
-                              </div>
-                            )}
-                          </PhotoProvider>
-                        ) : (
-                          <div className="relative flex aspect-[4/3] items-center justify-center overflow-hidden rounded-lg bg-zinc-100 ring-1 ring-zinc-200 dark:bg-zinc-800 dark:ring-zinc-700">
-                            <ImageOff className="h-10 w-10 text-zinc-300 dark:text-zinc-600" />
-                          </div>
-                        )}
-
-                        <div className="mt-2.5 space-y-1">
-                          <div className="flex items-center justify-between gap-2 text-sm">
-                            <span
-                              title={`${note.petNickname} (${note.petSpecies})`}
-                              className="min-w-0 truncate font-medium text-gray-800 dark:text-gray-200"
-                            >
-                              {note.petNickname}
-                              <span className="ml-1 font-normal text-gray-500 dark:text-gray-400">
-                                ({note.petSpecies})
-                              </span>
-                            </span>
-                            {note.recordedAt && (
-                              <span className="shrink-0 whitespace-nowrap text-gray-600 dark:text-gray-400">
-                                {format(note.recordedAt, 'MM-dd HH:mm')}
-                              </span>
-                            )}
-                          </div>
-                          {note.text && (
-                            <p className="text-sm leading-relaxed text-gray-600 dark:text-gray-400">
-                              {note.text}
-                            </p>
-                          )}
+            <div className="group">
+              {hasImages ? (
+                <PhotoProvider>
+                  <PhotoView src={note.images![0]}>
+                    <div className="relative aspect-[4/3] cursor-pointer overflow-hidden rounded-lg bg-zinc-100 ring-1 ring-zinc-200 dark:bg-zinc-800 dark:ring-zinc-700">
+                      {isLoaded && (
+                        <img
+                          src={getThumbnailUrl(note.images![0])}
+                          alt=""
+                          loading="lazy"
+                          decoding="async"
+                          className="h-full w-full object-cover transition-transform duration-300 hover:scale-105"
+                        />
+                      )}
+                      {note.images!.length > 1 && (
+                        <div className="absolute right-2 top-2 rounded bg-black/60 px-1.5 py-0.5 text-xs font-medium text-white">
+                          +{note.images!.length - 1}
                         </div>
-                      </div>
-                    )
-                  })}
+                      )}
+                    </div>
+                  </PhotoView>
+                  {note.images!.length > 1 && (
+                    <div className="hidden">
+                      {note.images!.slice(1).map((img, idx) => (
+                        <PhotoView key={idx} src={img} />
+                      ))}
+                    </div>
+                  )}
+                </PhotoProvider>
+              ) : (
+                <div className="relative flex aspect-[4/3] items-center justify-center overflow-hidden rounded-lg bg-zinc-100 ring-1 ring-zinc-200 dark:bg-zinc-800 dark:ring-zinc-700">
+                  <ImageOff className="h-10 w-10 text-zinc-300 dark:text-zinc-600" />
                 </div>
+              )}
+
+              <div className="mt-2.5 space-y-1">
+                <div className="flex items-center justify-between gap-2 text-sm">
+                  <span
+                    title={`${note.petNickname} (${note.petSpecies})`}
+                    className="min-w-0 truncate font-medium text-gray-800 dark:text-gray-200"
+                  >
+                    {note.petNickname}
+                    <span className="ml-1 font-normal text-gray-500 dark:text-gray-400">
+                      ({note.petSpecies})
+                    </span>
+                  </span>
+                  {note.recordedAt && (
+                    <span className="shrink-0 whitespace-nowrap text-gray-600 dark:text-gray-400">
+                      {format(note.recordedAt, 'MM-dd HH:mm')}
+                    </span>
+                  )}
+                </div>
+                {note.text && (
+                  <p className="text-sm leading-relaxed text-gray-600 dark:text-gray-400">
+                    {note.text}
+                  </p>
+                )}
               </div>
             </div>
           )
-        })}
-      </div>
+        }}
+        renderGroupSummary={(group) => {
+          const visibleGroupNotes = group.items.filter(isNoteVisible)
+          return (
+            <>
+              {visibleGroupNotes.length} entries ·{' '}
+              {visibleGroupNotes.reduce((sum, n) => sum + (n.images?.length || 0), 0)} photos
+            </>
+          )
+        }}
+        isItemVisible={isNoteVisible}
+        groupRef={handleGroupRef}
+        itemsClassName="grid grid-cols-1 gap-5 min-[480px]:grid-cols-2 md:grid-cols-3 lg:grid-cols-4"
+      />
     </Container>
   )
 }

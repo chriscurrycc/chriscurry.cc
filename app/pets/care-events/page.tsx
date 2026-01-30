@@ -1,6 +1,6 @@
 'use client'
 
-import { useMemo, useState, useRef, useEffect } from 'react'
+import { useMemo, useState, useRef, useEffect, useCallback } from 'react'
 import useSWR from 'swr'
 import clsx from 'clsx'
 import { format, startOfMonth, endOfMonth, isWithinInterval } from 'date-fns'
@@ -9,6 +9,7 @@ import type { PetMemo } from '~/app/api/memos/types'
 import { Container } from '~/components/ui/container'
 import { Drawer } from '~/components/ui/drawer'
 import { StickyContainer } from '~/components/ui/sticky-container'
+import { Timeline, type TimelineGroup } from '~/components/ui/timeline'
 import { Tooltip } from '~/components/ui/tooltip'
 import { MonthlyHeatmap, type HeatmapSelection } from '~/components/pets/monthly-heatmap'
 
@@ -54,10 +55,13 @@ const CARE_EVENT_TYPES = {
 
 type CareEventType = keyof typeof CARE_EVENT_TYPES
 
-interface GroupedCareEvent {
+interface CareEvent {
+  id: string
   timestamp: Date
   types: Set<CareEventType>
   plants: Map<string, { nickname: string; species: string }>
+  year: number
+  month: number
 }
 
 const ANIMAL_NICKNAMES = ['Cookie', 'Biscuit', '大福']
@@ -101,7 +105,7 @@ export default function PetCarePage() {
 
   const allEvents = useMemo(() => {
     if (!petMemos) return []
-    const eventMap = new Map<string, GroupedCareEvent>()
+    const eventMap = new Map<string, CareEvent>()
 
     petMemos.forEach(({ petData }) => {
       if (ANIMAL_NICKNAMES.includes(petData.nickname)) return
@@ -117,9 +121,12 @@ export default function PetCarePage() {
 
             if (!eventMap.has(timeKey)) {
               eventMap.set(timeKey, {
+                id: timeKey,
                 timestamp,
                 types: new Set(),
                 plants: new Map(),
+                year: timestamp.getFullYear(),
+                month: timestamp.getMonth(),
               })
             }
 
@@ -139,8 +146,37 @@ export default function PetCarePage() {
     )
   }, [petMemos])
 
-  const filteredEvents = useMemo(() => {
-    return allEvents.filter((event) => {
+  const monthGroups = useMemo(() => {
+    const groups = new Map<string, { key: string; label: string; year: number; month: number }>()
+
+    allEvents.forEach((event) => {
+      const key = `${event.year}-${event.month}`
+      if (!groups.has(key)) {
+        groups.set(key, {
+          key,
+          label: format(event.timestamp, 'yyyy/MM'),
+          year: event.year,
+          month: event.month,
+        })
+      }
+    })
+
+    return Array.from(groups.values()).sort((a, b) => {
+      if (a.year !== b.year) return b.year - a.year
+      return b.month - a.month
+    })
+  }, [allEvents])
+
+  const timelineGroups = useMemo((): TimelineGroup<CareEvent>[] => {
+    return monthGroups.map((group) => ({
+      key: group.key,
+      label: group.label,
+      items: allEvents.filter((event) => `${event.year}-${event.month}` === group.key),
+    }))
+  }, [monthGroups, allEvents])
+
+  const isEventVisible = useCallback(
+    (event: CareEvent) => {
       if (selectedNicknames.length > 0) {
         const hasMatchingPlant = Array.from(event.plants.values()).some((plant) =>
           selectedNicknames.includes(plant.nickname)
@@ -177,8 +213,11 @@ export default function PetCarePage() {
       }
 
       return true
-    })
-  }, [allEvents, selectedNicknames, heatmapSelection])
+    },
+    [selectedNicknames, heatmapSelection]
+  )
+
+  const visibleEvents = allEvents.filter(isEventVisible)
 
   const toggleNickname = (nickname: string) => {
     setSelectedNicknames((prev) =>
@@ -266,7 +305,7 @@ export default function PetCarePage() {
 
         <div className="flex items-center gap-3 sm:mt-3">
           <span className="text-sm text-gray-600 dark:text-gray-300">
-            {filteredEvents.length} events
+            {visibleEvents.length} events
           </span>
           <Tooltip
             content="Track care events for my plants and pets, including watering, fertilizing, and supplement schedules."
@@ -356,56 +395,80 @@ export default function PetCarePage() {
         </div>
       </Drawer>
 
-      <div className="mt-2 columns-1 gap-2 space-y-2 md:columns-2 lg:columns-3">
-        {filteredEvents.length === 0 ? (
-          <div className="rounded-xl bg-white/80 p-8 text-center text-gray-500 shadow-sm ring-1 ring-zinc-200/50 dark:bg-zinc-800/50 dark:text-gray-400 dark:ring-zinc-700/50">
-            No events found
-          </div>
-        ) : (
-          filteredEvents.map((event, index) => (
-            <div
-              key={`${event.timestamp.toISOString()}-${index}`}
-              className="break-inside-avoid rounded-xl bg-white/80 p-3 shadow-sm ring-1 ring-zinc-200/50 transition-all duration-300 hover:bg-white hover:shadow-md hover:ring-zinc-300 dark:bg-zinc-800/50 dark:ring-zinc-700/50 dark:hover:bg-zinc-800 dark:hover:ring-zinc-600"
-            >
-              <div className="flex items-center justify-between gap-3">
-                <div className="flex flex-wrap gap-1.5">
-                  {Array.from(event.types).map((type) => {
-                    const config = CARE_EVENT_TYPES[type]
-                    const Icon = config.icon
+      {visibleEvents.length === 0 ? (
+        <div className="mt-5 rounded-xl bg-white/80 p-8 text-center text-gray-500 shadow-sm ring-1 ring-zinc-200/50 dark:bg-zinc-800/50 dark:text-gray-400 dark:ring-zinc-700/50">
+          No events found
+        </div>
+      ) : (
+        <Timeline
+          groups={timelineGroups}
+          isItemVisible={isEventVisible}
+          renderGroupSummary={(group) => {
+            const visibleCount = group.items.filter(isEventVisible).length
+            return `${visibleCount} events`
+          }}
+          itemsClassName="grid grid-cols-1 gap-3 min-[400px]:grid-cols-2 min-[600px]:grid-cols-3 md:grid-cols-4"
+          renderItem={(event) => {
+            const eventTypes = Array.from(event.types)
+            const plants = Array.from(event.plants.values())
+
+            return (
+              <div className="group flex h-full flex-col rounded-xl bg-white/80 p-3 shadow-sm ring-1 ring-zinc-200/50 transition-all duration-200 hover:bg-white hover:shadow-md hover:ring-zinc-300 dark:bg-zinc-800/50 dark:ring-zinc-700/50 dark:hover:bg-zinc-800 dark:hover:ring-zinc-600">
+                <div className="mb-2.5 flex items-center justify-between gap-2">
+                  <div className="flex items-center gap-1">
+                    {eventTypes.map((type) => {
+                      const config = CARE_EVENT_TYPES[type]
+                      const Icon = config.icon
+                      return (
+                        <Tooltip key={type} content={config.label}>
+                          <span
+                            className={clsx(
+                              'flex h-6 w-6 items-center justify-center rounded ring-1 ring-inset',
+                              config.bgColor,
+                              config.color,
+                              config.ringColor
+                            )}
+                          >
+                            <Icon className="h-3 w-3" />
+                          </span>
+                        </Tooltip>
+                      )
+                    })}
+                  </div>
+                  <time className="text-xs tabular-nums text-gray-400 dark:text-gray-500">
+                    {format(event.timestamp, 'MM/dd HH:mm')}
+                  </time>
+                </div>
+
+                <div className="flex flex-wrap items-center gap-x-1 gap-y-1 text-sm">
+                  {plants.map((plant, idx) => {
+                    const hasFilter = selectedNicknames.length > 0
+                    const isSelected = selectedNicknames.includes(plant.nickname)
+                    const isFaded = hasFilter && !isSelected
                     return (
-                      <span
-                        key={type}
-                        className={clsx(
-                          'flex items-center gap-1 rounded-md px-2 py-1 text-xs font-medium ring-1 ring-inset',
-                          config.bgColor,
-                          config.color,
-                          config.ringColor
+                      <span key={plant.nickname} className="flex items-center">
+                        <span
+                          title={`${plant.nickname} (${plant.species})`}
+                          className={clsx(
+                            isFaded
+                              ? 'text-gray-400 dark:text-gray-500'
+                              : 'text-gray-900 dark:text-gray-100'
+                          )}
+                        >
+                          {plant.nickname}
+                        </span>
+                        {idx < plants.length - 1 && (
+                          <span className="ml-1 text-gray-400 dark:text-gray-500">·</span>
                         )}
-                      >
-                        <Icon className="h-3 w-3" />
-                        {config.label}
                       </span>
                     )
                   })}
                 </div>
-                <time className="shrink-0 text-xs text-gray-500 dark:text-gray-400">
-                  {format(event.timestamp, 'MMM d, HH:mm')}
-                </time>
               </div>
-              <div className="mt-2 flex flex-wrap gap-x-2 gap-y-0.5">
-                {Array.from(event.plants.values()).map((plant) => (
-                  <span key={plant.nickname} className="text-sm text-gray-600 dark:text-gray-400">
-                    {plant.nickname}
-                    <span className="ml-0.5 text-gray-400 dark:text-gray-500">
-                      ({plant.species})
-                    </span>
-                  </span>
-                ))}
-              </div>
-            </div>
-          ))
-        )}
-      </div>
+            )
+          }}
+        />
+      )}
     </Container>
   )
 }
