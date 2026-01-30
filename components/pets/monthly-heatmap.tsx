@@ -1,8 +1,9 @@
 'use client'
 
-import { useMemo, useState } from 'react'
+import { useMemo } from 'react'
 import clsx from 'clsx'
 import { format, subMonths, startOfMonth } from 'date-fns'
+import { Tooltip } from '~/components/ui/tooltip'
 
 export type HeatmapSelection =
   | { kind: 'cells'; cells: { month: string; eventType: string }[] }
@@ -24,6 +25,7 @@ interface MonthlyHeatmapProps {
   }[]
   selection: HeatmapSelection
   onSelectionChange: (selection: HeatmapSelection) => void
+  vertical?: boolean
 }
 
 const LEVEL_COLORS: Record<string, string[]> = {
@@ -69,14 +71,8 @@ export function MonthlyHeatmap({
   eventTypes,
   selection,
   onSelectionChange,
+  vertical = false,
 }: MonthlyHeatmapProps) {
-  const [hoveredCell, setHoveredCell] = useState<{
-    type: string
-    month: Date
-    count: number
-  } | null>(null)
-  const [tooltipPos, setTooltipPos] = useState({ x: 0, y: 0 })
-
   const months = useMemo(() => {
     const result: Date[] = []
     const now = new Date()
@@ -188,53 +184,155 @@ export function MonthlyHeatmap({
     return selection?.kind === 'months' && selection.months.includes(format(month, 'yyyy-MM'))
   }
 
+  if (vertical) {
+    const reversedMonths = [...months].reverse()
+
+    return (
+      <div className="space-y-2">
+        {/* Header row with event type icons */}
+        <div className="flex items-center gap-2">
+          <div className="w-8" />
+          {eventTypes.map(({ key, icon: Icon, color }) => {
+            const typeSelected = isTypeSelected(key)
+            return (
+              <button
+                key={key}
+                onClick={() => handleTypeClick(key)}
+                className={clsx(
+                  'flex h-6 w-6 items-center justify-center transition-all',
+                  color,
+                  typeSelected && 'scale-110',
+                  'hover:opacity-80'
+                )}
+              >
+                <Icon className="h-4 w-4" />
+              </button>
+            )
+          })}
+        </div>
+
+        {/* Month rows - reversed so recent months are at top */}
+        {reversedMonths.map((month) => {
+          const monthKey = format(month, 'yyyy-MM')
+          const monthSelected = isMonthSelected(month)
+
+          return (
+            <div key={monthKey} className="flex items-center gap-2">
+              <button
+                onClick={() => handleMonthClick(month)}
+                className={clsx(
+                  'w-8 text-left text-xs transition-all',
+                  monthSelected
+                    ? 'font-bold text-indigo-600 dark:text-indigo-400'
+                    : 'text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200'
+                )}
+              >
+                {format(month, 'MMM')}
+              </button>
+              {eventTypes.map(({ key, label }) => {
+                const typeData = dataByType.get(key)
+                const colors = LEVEL_COLORS[key] || LEVEL_COLORS.watering
+                const count = typeData?.get(monthKey) || 0
+                const level = getLevel(count)
+                const selected = isCellSelected(month, key)
+
+                const cellButton = (
+                  <button
+                    key={key}
+                    onClick={() => handleCellClick(month, key, count)}
+                    className={clsx(
+                      'h-6 w-6 rounded transition-all',
+                      colors[level],
+                      selected && 'ring-1 ring-indigo-500 ring-offset-1 dark:ring-offset-zinc-900',
+                      count > 0 ? 'cursor-pointer hover:scale-110' : 'cursor-default'
+                    )}
+                  />
+                )
+
+                if (count === 0) return cellButton
+
+                return (
+                  <Tooltip
+                    key={key}
+                    content={
+                      <div>
+                        <div className="font-medium">{format(month, 'MMM yyyy')}</div>
+                        <div className="text-gray-300">
+                          {label}: {count}
+                        </div>
+                      </div>
+                    }
+                    side="top"
+                  >
+                    {cellButton}
+                  </Tooltip>
+                )
+              })}
+            </div>
+          )
+        })}
+      </div>
+    )
+  }
+
   return (
-    <div className="space-y-1.5">
+    <div className="space-y-2">
       {eventTypes.map(({ key, label, icon: Icon, color }) => {
         const typeData = dataByType.get(key)
         const colors = LEVEL_COLORS[key] || LEVEL_COLORS.watering
         const typeSelected = isTypeSelected(key)
 
         return (
-          <div key={key} className="flex items-center gap-2">
+          <div key={key} className="flex items-center gap-2.5">
             <button
               onClick={() => handleTypeClick(key)}
               className={clsx(
-                'flex w-6 items-center justify-end transition-all md:w-28 md:gap-1.5',
+                'flex w-7 items-center justify-end transition-all lg:w-32 lg:gap-2',
                 color,
                 typeSelected && 'scale-105 font-semibold',
                 'hover:opacity-80'
               )}
             >
-              <span className="hidden whitespace-nowrap text-xs md:inline">{label}</span>
-              <Icon className="h-3.5 w-3.5 shrink-0" />
+              <span className="hidden whitespace-nowrap text-sm lg:inline">{label}</span>
+              <Icon className="h-4 w-4 shrink-0" />
             </button>
-            <div className="flex gap-1.5">
+            <div className="flex gap-2">
               {months.map((month) => {
                 const monthKey = format(month, 'yyyy-MM')
                 const count = typeData?.get(monthKey) || 0
                 const level = getLevel(count)
                 const selected = isCellSelected(month, key)
 
-                return (
+                const cellButton = (
                   <button
                     key={monthKey}
                     onClick={() => handleCellClick(month, key, count)}
-                    onMouseEnter={(e) => {
-                      if (count > 0) {
-                        const rect = e.currentTarget.getBoundingClientRect()
-                        setTooltipPos({ x: rect.left + rect.width / 2, y: rect.top })
-                        setHoveredCell({ type: label, month, count })
-                      }
-                    }}
-                    onMouseLeave={() => setHoveredCell(null)}
                     className={clsx(
-                      'h-5 w-5 rounded-sm transition-all',
+                      'h-6 w-6 rounded transition-all',
                       colors[level],
                       selected && 'ring-1 ring-indigo-500 ring-offset-1 dark:ring-offset-zinc-900',
                       count > 0 ? 'cursor-pointer hover:scale-110' : 'cursor-default'
                     )}
                   />
+                )
+
+                if (count === 0) return cellButton
+
+                return (
+                  <Tooltip
+                    key={monthKey}
+                    content={
+                      <div>
+                        <div className="font-medium">{format(month, 'MMM yyyy')}</div>
+                        <div className="text-gray-300">
+                          {label}: {count}
+                        </div>
+                      </div>
+                    }
+                    side="top"
+                  >
+                    {cellButton}
+                  </Tooltip>
                 )
               })}
             </div>
@@ -242,9 +340,9 @@ export function MonthlyHeatmap({
         )
       })}
 
-      <div className="flex items-center gap-2 pt-1">
-        <div className="w-6 md:w-28" />
-        <div className="flex gap-1.5">
+      <div className="flex items-center gap-2.5 pt-1">
+        <div className="w-7 lg:w-32" />
+        <div className="flex gap-2">
           {months.map((month) => {
             const monthKey = format(month, 'yyyy-MM')
             const selected = isMonthSelected(month)
@@ -254,10 +352,10 @@ export function MonthlyHeatmap({
                 key={monthKey}
                 onClick={() => handleMonthClick(month)}
                 className={clsx(
-                  'w-5 text-center text-[10px] transition-all',
+                  'w-6 text-center text-xs transition-all',
                   selected
                     ? 'font-bold text-indigo-600 dark:text-indigo-400'
-                    : 'text-gray-400 hover:text-gray-600 dark:text-gray-500 dark:hover:text-gray-300'
+                    : 'text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200'
                 )}
               >
                 {format(month, 'MMM').slice(0, 1)}
@@ -266,18 +364,6 @@ export function MonthlyHeatmap({
           })}
         </div>
       </div>
-
-      {hoveredCell && hoveredCell.count > 0 && (
-        <div
-          className="pointer-events-none fixed z-50 -translate-x-1/2 -translate-y-full rounded-md bg-gray-900 px-3 py-2 text-xs text-gray-100 shadow-lg dark:bg-zinc-700"
-          style={{ left: tooltipPos.x, top: tooltipPos.y - 8 }}
-        >
-          <div className="font-medium">{format(hoveredCell.month, 'MMM yyyy')}</div>
-          <div className="text-gray-300">
-            {hoveredCell.type}: {hoveredCell.count}
-          </div>
-        </div>
-      )}
     </div>
   )
 }
