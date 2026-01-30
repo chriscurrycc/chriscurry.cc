@@ -21,10 +21,13 @@ function extractPetDataFromContent(content: string): PetData | null {
   return null
 }
 
-export async function GET() {
+export async function GET(request: Request) {
   if (!MEMOS_API_TOKEN || !MEMOS_HOST) {
     return new Response('Missing required environment variables for Memos API', { status: 500 })
   }
+
+  const { searchParams } = new URL(request.url)
+  const includeEnded = searchParams.get('includeEnded') === 'true'
 
   try {
     const allMemos: PetMemo[] = []
@@ -57,7 +60,11 @@ export async function GET() {
       for (const memo of data.memos) {
         const petData = extractPetDataFromContent(memo.content)
 
-        if (!petData || petData.endDate !== undefined || petData.template === true) {
+        if (!petData || petData.template === true) {
+          continue
+        }
+
+        if (!includeEnded && petData.endDate !== undefined) {
           continue
         }
 

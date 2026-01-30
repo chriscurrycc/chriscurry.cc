@@ -1,11 +1,18 @@
 'use client'
 
-import { useMemo, useState } from 'react'
+import { useMemo, useState, useRef, useEffect } from 'react'
+import useSWR from 'swr'
 import clsx from 'clsx'
 import { format, startOfMonth, endOfMonth, isWithinInterval } from 'date-fns'
-import { Droplet, Leaf, FlaskConical, Pill, Sprout, X, Info } from 'lucide-react'
+import { Droplet, Leaf, FlaskConical, Pill, Sprout, X, Info, Filter } from 'lucide-react'
 import type { PetMemo } from '~/app/api/memos/types'
-import { MonthlyHeatmap, type HeatmapSelection } from './monthly-heatmap'
+import { Container } from '~/components/ui/container'
+import { Drawer } from '~/components/ui/drawer'
+import { StickyContainer } from '~/components/ui/sticky-container'
+import { Tooltip } from '~/components/ui/tooltip'
+import { MonthlyHeatmap, type HeatmapSelection } from '~/components/pets/monthly-heatmap'
+
+const fetcher = (url: string) => fetch(url).then((res) => res.json())
 
 const CARE_EVENT_TYPES = {
   watering: {
@@ -53,17 +60,33 @@ interface GroupedCareEvent {
   plants: Map<string, { nickname: string; species: string }>
 }
 
-interface CareEventsProps {
-  petMemos: PetMemo[]
-}
-
 const ANIMAL_NICKNAMES = ['Cookie', 'Biscuit', '大福']
 
-export function CareEvents({ petMemos }: CareEventsProps) {
+export default function PetCarePage() {
   const [heatmapSelection, setHeatmapSelection] = useState<HeatmapSelection>(null)
   const [selectedNicknames, setSelectedNicknames] = useState<string[]>([])
+  const [isFilterOpen, setIsFilterOpen] = useState(false)
+  const stickyRef = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    const handleResize = () => {
+      if (window.innerWidth >= 640 && isFilterOpen) {
+        setIsFilterOpen(false)
+      }
+    }
+    window.addEventListener('resize', handleResize)
+    return () => window.removeEventListener('resize', handleResize)
+  }, [isFilterOpen])
+
+  const { data: petMemos, isLoading } = useSWR<PetMemo[]>('/api/memos/pets', fetcher, {
+    dedupingInterval: 1000 * 60 * 60,
+    revalidateIfStale: true,
+    revalidateOnFocus: false,
+    revalidateOnReconnect: false,
+  })
 
   const allPlants = useMemo(() => {
+    if (!petMemos) return []
     const plants = new Map<string, { nickname: string; species: string }>()
     petMemos.forEach(({ petData }) => {
       if (petData.nickname && !ANIMAL_NICKNAMES.includes(petData.nickname)) {
@@ -77,6 +100,7 @@ export function CareEvents({ petMemos }: CareEventsProps) {
   }, [petMemos])
 
   const allEvents = useMemo(() => {
+    if (!petMemos) return []
     const eventMap = new Map<string, GroupedCareEvent>()
 
     petMemos.forEach(({ petData }) => {
@@ -174,82 +198,165 @@ export function CareEvents({ petMemos }: CareEventsProps) {
     ...config,
   }))
 
+  if (isLoading) {
+    return (
+      <Container className="pt-0">
+        <div className="flex items-center justify-center py-12">
+          <div className="h-8 w-8 animate-spin rounded-full border-4 border-indigo-500 border-t-transparent" />
+        </div>
+      </Container>
+    )
+  }
+
+  if (!petMemos || petMemos.length === 0) {
+    return (
+      <Container className="pt-0">
+        <div className="rounded-lg bg-white/80 p-8 text-center text-gray-500 shadow-sm ring-1 ring-zinc-200/50 dark:bg-zinc-800/50 dark:text-gray-400 dark:ring-zinc-700/50">
+          No pet data found
+        </div>
+      </Container>
+    )
+  }
+
   return (
-    <div className="space-y-1 pt-2">
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:gap-6">
-        <div className="shrink-0">
+    <Container className="pt-0">
+      <StickyContainer ref={stickyRef}>
+        {/* Filters - hidden on mobile */}
+        <div className="hidden flex-col gap-4 sm:flex md:flex-row md:items-start md:gap-6">
+          <div className="shrink-0">
+            <MonthlyHeatmap
+              events={allEvents}
+              eventTypes={eventTypesList}
+              selection={heatmapSelection}
+              onSelectionChange={setHeatmapSelection}
+            />
+          </div>
+
+          <div className="flex flex-1 flex-wrap content-start items-start gap-1.5">
+            <button
+              onClick={() => setSelectedNicknames([])}
+              className={clsx(
+                'rounded-md px-2.5 py-1.5 text-sm font-medium transition-colors',
+                selectedNicknames.length === 0
+                  ? 'bg-indigo-50 text-indigo-600 ring-1 ring-inset ring-indigo-600/20 dark:bg-indigo-400/10 dark:text-indigo-400 dark:ring-indigo-400/20'
+                  : 'text-gray-600 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-zinc-800'
+              )}
+            >
+              All
+            </button>
+            {allPlants.map((plant) => {
+              const isSelected = selectedNicknames.includes(plant.nickname)
+              return (
+                <button
+                  key={plant.nickname}
+                  onClick={() => toggleNickname(plant.nickname)}
+                  className={clsx(
+                    'rounded-md px-2.5 py-1.5 text-sm font-medium transition-colors',
+                    isSelected
+                      ? 'bg-indigo-50 text-indigo-600 ring-1 ring-inset ring-indigo-600/20 dark:bg-indigo-400/10 dark:text-indigo-400 dark:ring-indigo-400/20'
+                      : 'text-gray-600 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-zinc-800'
+                  )}
+                >
+                  {plant.nickname}
+                </button>
+              )
+            })}
+          </div>
+        </div>
+
+        <div className="flex items-center gap-3 sm:mt-3">
+          <span className="text-sm text-gray-600 dark:text-gray-300">
+            {filteredEvents.length} events
+          </span>
+          <Tooltip
+            content="Track care events for my plants and pets, including watering, fertilizing, and supplement schedules."
+            side="right"
+            className="hidden sm:block"
+          >
+            <Info className="hidden h-3.5 w-3.5 cursor-help text-gray-400 dark:text-gray-500 sm:block" />
+          </Tooltip>
+          {/* Filter button - mobile only */}
+          <button
+            onClick={() => setIsFilterOpen(true)}
+            className={clsx(
+              'flex items-center gap-1 rounded-md px-2 py-1 text-sm font-medium transition-colors sm:hidden',
+              'text-gray-600 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-zinc-800',
+              activeFilterCount > 0 && 'text-indigo-600 dark:text-indigo-400'
+            )}
+          >
+            <Filter className="h-3.5 w-3.5" />
+            Filter
+            {activeFilterCount > 0 && <span>({activeFilterCount})</span>}
+          </button>
+          <button
+            onClick={clearAllFilters}
+            className={clsx(
+              'flex items-center gap-1 rounded-md px-2 py-1 text-sm font-medium transition-colors',
+              activeFilterCount > 0
+                ? 'text-gray-600 hover:bg-gray-100 hover:text-gray-800 dark:text-gray-300 dark:hover:bg-zinc-800 dark:hover:text-gray-100'
+                : 'pointer-events-none text-transparent'
+            )}
+          >
+            <X className="h-3.5 w-3.5" />
+            Clear
+          </button>
+        </div>
+      </StickyContainer>
+
+      {/* Mobile filter drawer */}
+      <Drawer
+        open={isFilterOpen}
+        onClose={() => setIsFilterOpen(false)}
+        title="Filter"
+        wrapperClassName="sm:hidden"
+      >
+        <div className="mb-4">
+          <h4 className="mb-2 text-sm font-medium text-gray-700 dark:text-gray-300">Plants</h4>
+          <div className="flex flex-wrap gap-1.5">
+            <button
+              onClick={() => setSelectedNicknames([])}
+              className={clsx(
+                'rounded-md px-2.5 py-1.5 text-sm font-medium transition-colors',
+                selectedNicknames.length === 0
+                  ? 'bg-indigo-50 text-indigo-600 ring-1 ring-inset ring-indigo-600/20 dark:bg-indigo-400/10 dark:text-indigo-400 dark:ring-indigo-400/20'
+                  : 'text-gray-600 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-zinc-800'
+              )}
+            >
+              All
+            </button>
+            {allPlants.map((plant) => {
+              const isSelected = selectedNicknames.includes(plant.nickname)
+              return (
+                <button
+                  key={plant.nickname}
+                  onClick={() => toggleNickname(plant.nickname)}
+                  className={clsx(
+                    'rounded-md px-2.5 py-1.5 text-sm font-medium transition-colors',
+                    isSelected
+                      ? 'bg-indigo-50 text-indigo-600 ring-1 ring-inset ring-indigo-600/20 dark:bg-indigo-400/10 dark:text-indigo-400 dark:ring-indigo-400/20'
+                      : 'text-gray-600 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-zinc-800'
+                  )}
+                >
+                  {plant.nickname}
+                </button>
+              )
+            })}
+          </div>
+        </div>
+
+        <div>
+          <h4 className="mb-2 text-sm font-medium text-gray-700 dark:text-gray-300">Heatmap</h4>
           <MonthlyHeatmap
             events={allEvents}
             eventTypes={eventTypesList}
             selection={heatmapSelection}
             onSelectionChange={setHeatmapSelection}
+            vertical
           />
         </div>
+      </Drawer>
 
-        <div className="flex flex-1 flex-wrap content-start items-start gap-1">
-          <button
-            onClick={() => {
-              if (selectedNicknames.length === allPlants.length) {
-                setSelectedNicknames([])
-              } else {
-                setSelectedNicknames(allPlants.map((p) => p.nickname))
-              }
-            }}
-            className={clsx(
-              'rounded-md px-2 py-1 text-xs font-medium transition-colors',
-              selectedNicknames.length === allPlants.length
-                ? 'bg-indigo-50 text-indigo-600 ring-1 ring-inset ring-indigo-600/20 dark:bg-indigo-400/10 dark:text-indigo-400 dark:ring-indigo-400/20'
-                : 'text-gray-500 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-zinc-800'
-            )}
-          >
-            All
-          </button>
-          {allPlants.map((plant) => {
-            const isSelected = selectedNicknames.includes(plant.nickname)
-            return (
-              <button
-                key={plant.nickname}
-                onClick={() => toggleNickname(plant.nickname)}
-                className={clsx(
-                  'rounded-md px-2 py-1 text-xs font-medium transition-colors',
-                  isSelected
-                    ? 'bg-indigo-50 text-indigo-600 ring-1 ring-inset ring-indigo-600/20 dark:bg-indigo-400/10 dark:text-indigo-400 dark:ring-indigo-400/20'
-                    : 'text-gray-500 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-zinc-800'
-                )}
-              >
-                {plant.nickname}
-              </button>
-            )
-          })}
-        </div>
-      </div>
-
-      <div className="flex items-center gap-2">
-        <span className="text-xs text-gray-500 dark:text-gray-400">
-          {filteredEvents.length} events
-        </span>
-        <div className="group relative flex items-center">
-          <Info className="h-3 w-3 cursor-help text-gray-400 dark:text-gray-500" />
-          <div className="pointer-events-none absolute left-full top-1/2 z-50 ml-2 w-64 -translate-y-1/2 rounded-md bg-gray-900 px-3 py-2 text-xs text-gray-100 opacity-0 shadow-lg transition-opacity group-hover:opacity-100 dark:bg-zinc-700">
-            Track care events for my plants and pets, including watering, fertilizing, and
-            supplement schedules.
-          </div>
-        </div>
-        <button
-          onClick={clearAllFilters}
-          className={clsx(
-            'flex items-center gap-1 rounded-md px-1.5 py-1 text-xs font-medium transition-colors',
-            activeFilterCount > 0
-              ? 'text-gray-500 hover:bg-gray-100 hover:text-gray-700 dark:text-gray-400 dark:hover:bg-zinc-800 dark:hover:text-gray-300'
-              : 'pointer-events-none invisible'
-          )}
-        >
-          <X className="h-3 w-3" />
-          Clear
-        </button>
-      </div>
-
-      <div className="columns-1 gap-2 space-y-2 md:columns-2 lg:columns-3">
+      <div className="mt-2 columns-1 gap-2 space-y-2 md:columns-2 lg:columns-3">
         {filteredEvents.length === 0 ? (
           <div className="rounded-xl bg-white/80 p-8 text-center text-gray-500 shadow-sm ring-1 ring-zinc-200/50 dark:bg-zinc-800/50 dark:text-gray-400 dark:ring-zinc-700/50">
             No events found
@@ -299,6 +406,6 @@ export function CareEvents({ petMemos }: CareEventsProps) {
           ))
         )}
       </div>
-    </div>
+    </Container>
   )
 }

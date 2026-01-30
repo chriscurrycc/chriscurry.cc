@@ -57,3 +57,5 @@ scripts/imdb-movies.csv
 
 # Claude
 .claude/settings.local.json
+
+.playwright-mcp

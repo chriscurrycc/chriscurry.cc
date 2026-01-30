@@ -66,3 +66,4 @@ Required for full functionality (see `.env.example`):
 - Conventional commits enforced via commitlint
 - Path aliases: `@/` and `~/` map to project root
 - MDX components registered in `/components/mdx/index.tsx`
+- Avoid creating page files that only import and render a single component with no other content - write the content directly in the page file instead. Extracting components is fine when the page structure is complex or when components are reused
