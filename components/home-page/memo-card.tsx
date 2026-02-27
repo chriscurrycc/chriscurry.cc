@@ -145,7 +145,10 @@ function MemoContent({ content }: { content: string }) {
 }
 
 export default function MemoCard({ content, createTime, updateTime }: MemoCardProps) {
-  const isEdited = updateTime && updateTime !== createTime
+  const isEdited =
+    updateTime &&
+    updateTime !== createTime &&
+    new Date(updateTime).toDateString() !== new Date(createTime).toDateString()
   const contentRef = useRef<HTMLDivElement>(null)
   const [isTruncated, setIsTruncated] = useState(false)
   const [isOpen, setIsOpen] = useState(false)
