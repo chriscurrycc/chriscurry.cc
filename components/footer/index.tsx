@@ -9,7 +9,7 @@ import { Signature } from './signature'
 
 export function Footer() {
   return (
-    <Container as="footer" className="mb-4 mt-8 md:mt-16">
+    <Container as="footer" className="mb-4 mt-8 md:mt-10">
       <div
         className={clsx([
           'grid grid-cols-1 gap-x-8 gap-y-8 py-8 md:grid-cols-2 xl:grid-cols-3',
@@ -26,9 +26,9 @@ export function Footer() {
             </div>
           </div>
         </div>
-        <FooterNav />
+        {/* <FooterNav /> */}
       </div>
-      <FooterBottom />
+      {/* <FooterBottom /> */}
     </Container>
   )
 }

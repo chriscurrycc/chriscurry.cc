@@ -6,7 +6,7 @@ import FourOhFour from '~/icons/404.svg'
 
 export default function NotFound() {
   return (
-    <Container className="pt-4 lg:pt-12">
+    <Container className="pt-4 lg:pt-6">
       <div className="flex flex-col items-center justify-center py-6">
         <FourOhFour className="mx-auto aspect-square w-[300px] max-w-[80vw] md:w-[500px]" />
         <div className="space-x-2 pt-8 md:space-y-5 md:pt-12 xl:pt-16">

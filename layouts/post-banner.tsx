@@ -25,7 +25,7 @@ export function PostBanner({ content, children }: LayoutProps) {
   const postUrl = `${SITE_METADATA.siteUrl}/${type.toLowerCase()}/${slug}`
 
   return (
-    <Container className="pt-4 lg:pt-12">
+    <Container className="pt-4 lg:pt-6">
       <ScrollButtons />
       <article className="space-y-6 pt-6 lg:space-y-16">
         <div className="space-y-4">

@@ -29,7 +29,7 @@ export function PostLayout({ content, next, prev, children }: LayoutProps) {
   let postUrl = `${SITE_METADATA.siteUrl}/${type.toLowerCase()}/${slug}`
 
   return (
-    <Container className="pt-4 lg:pt-12">
+    <Container className="pt-4 lg:pt-6">
       <ScrollButtons />
       <article className="pt-6">
         <div className="space-y-4">

@@ -2,7 +2,7 @@ export const SITE_METADATA = {
   title: `Chris Curry`,
   author: 'Chris Curry',
   headerTitle: `Chris Curry's digital garden`,
-  description: 'A personal digital garden where I document my learning and experiences.',
+  description: 'Building software with AI as my development partner — documenting the journey.',
   language: 'en-us',
   theme: 'system', // system, dark or light
   siteUrl: 'https://www.chriscurry.cc',

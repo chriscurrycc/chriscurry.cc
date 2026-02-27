@@ -8,6 +8,7 @@ import { X, ImageOff, Filter } from 'lucide-react'
 import { PhotoProvider, PhotoView } from 'react-photo-view'
 import type { PetMemo } from '~/app/api/memos/types'
 import { Container } from '~/components/ui/container'
+import { LoadingSpinner } from '~/components/ui/loading-spinner'
 import { Drawer } from '~/components/ui/drawer'
 import { StickyContainer } from '~/components/ui/sticky-container'
 import { Timeline, type TimelineGroup } from '~/components/ui/timeline'
@@ -247,9 +248,7 @@ export default function PetNotesPage() {
   if (isLoading) {
     return (
       <Container className="pt-0">
-        <div className="flex items-center justify-center py-12">
-          <div className="h-8 w-8 animate-spin rounded-full border-4 border-indigo-500 border-t-transparent" />
-        </div>
+        <LoadingSpinner className="py-12" />
       </Container>
     )
   }

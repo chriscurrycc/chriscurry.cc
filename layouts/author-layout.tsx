@@ -11,10 +11,10 @@ interface Props {
 
 export function AuthorLayout({ children }: Props) {
   return (
-    <Container className="pt-4 lg:pt-12">
+    <Container className="pt-4 lg:pt-6">
       <PageHeader
         title="About"
-        description="A bit of background on who I am, what I do, and why I started this blog. Nothing too serious, just a little intro to the person typing away behind the scenes."
+        description="Who I am, how I build, and what drives me. A quick intro to the person — and the AI — behind the code."
         className="border-b border-gray-200 dark:border-gray-700"
       />
       <div className="py-8 md:grid md:grid-cols-3">

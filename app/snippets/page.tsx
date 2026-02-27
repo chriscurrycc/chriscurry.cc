@@ -11,7 +11,7 @@ export default function Snippets() {
   const snippets = allCoreContent(sortPosts(allSnippets))
 
   return (
-    <Container className="pt-4 lg:pt-12">
+    <Container className="pt-4 lg:pt-6">
       <PageHeader
         title="Snippets"
         description="My personal stash of code snippets that make my life easier. They’re simple and reusable. Feel free to copy, tweak, and use them as you like."

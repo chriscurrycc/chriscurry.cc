@@ -23,7 +23,7 @@ export function PostSimple({ content, children }: PostSimpleProps) {
   const postUrl = `${SITE_METADATA.siteUrl}/${type.toLowerCase()}/${slug}`
 
   return (
-    <Container className="pt-4 lg:pt-12">
+    <Container className="pt-4 lg:pt-6">
       <ScrollButtons />
       <article className="space-y-6 divide-y divide-gray-200 pt-6 dark:divide-gray-700 lg:space-y-12">
         <div className="space-y-4">

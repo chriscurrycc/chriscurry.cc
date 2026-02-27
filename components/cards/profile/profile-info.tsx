@@ -40,7 +40,7 @@ const SOCIALS = [
 
 export function ProfileCardInfo() {
   return (
-    <div className="hidden py-4 md:block md:px-5">
+    <div className="px-4 py-4 md:px-5">
       <h3 className="text-xl font-semibold text-gray-800 dark:text-white">{AUTHOR_INFO.name}</h3>
       <h4 className="py-2 text-gray-500 dark:text-gray-400">{AUTHOR_INFO.identity}</h4>
       <div className="mb-2 mt-4 space-y-4">

@@ -1,14 +1,14 @@
 import { SITE_METADATA } from './site-metadata'
 
 export const HEADER_NAV_LINKS = [
-  { href: '/blog', title: 'Blog', emoji: 'writing-hand' },
+  // { href: '/blog', title: 'Blog', emoji: 'writing-hand' },
   // { href: '/snippets', title: 'Snippets', emoji: 'dna' },
-  { href: '/projects', title: 'Projects', emoji: 'man-technologist' },
+  // { href: '/projects', title: 'Projects', emoji: 'man-technologist' },
   { href: '/about', title: 'About', emoji: 'smiling-face-with-sunglasses' },
 ]
 
 export const MORE_NAV_LINKS = [
-  { href: '/tags', title: 'Tags', emoji: 'label' },
+  // { href: '/tags', title: 'Tags', emoji: 'label' },
   { href: '/pets/care-events', title: 'Pet Care', emoji: 'seedling' },
   { href: '/pets/notes', title: 'Pet Notes', emoji: 'camera-with-flash' },
   // { href: '/friends', title: 'Friends', emoji: 'woman-and-man-holding-hands' },

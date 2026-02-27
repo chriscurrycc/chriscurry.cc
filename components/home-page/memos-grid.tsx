@@ -1,9 +1,9 @@
 'use client'
 
-import { Loader } from 'lucide-react'
 import useSWR from 'swr'
 import MemoCard from './memo-card'
 import type { Memo } from '~/app/api/memos/types'
+import { LoadingSpinner } from '~/components/ui/loading-spinner'
 
 const fetcher = (url: string) => fetch(url).then((res) => res.json())
 
@@ -16,11 +16,7 @@ export default function MemosGrid() {
   })
 
   if (isLoading) {
-    return (
-      <div className="flex justify-center pt-4">
-        <Loader className="h-6 w-6 animate-spin text-gray-400" />
-      </div>
-    )
+    return <LoadingSpinner className="pt-4" />
   }
 
   if (!memos || memos.length === 0) {
@@ -28,7 +24,7 @@ export default function MemosGrid() {
   }
 
   return (
-    <div className="mx-auto max-w-6xl py-4">
+    <div className="mx-auto max-w-6xl py-2">
       <div className="columns-1 gap-4 md:columns-2 lg:columns-3">
         {memos.map((memo) => (
           <div key={memo.uid} className="mb-4 break-inside-avoid">

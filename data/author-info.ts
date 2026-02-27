@@ -11,7 +11,7 @@ export const AUTHOR_INFO = {
   },
   work: {
     company: '',
-    occupation: 'Front-End Engineer',
+    occupation: 'AI-Driven Software Engineer',
     location: 'Beijing, China',
     website: 'https://chriscurry.cc',
   },

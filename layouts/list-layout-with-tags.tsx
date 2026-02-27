@@ -25,7 +25,7 @@ export function ListLayoutWithTags({ title, description, posts, snippets }: List
   const [view, setView] = useState<'blogs' | 'snippets'>(hasBlogs ? 'blogs' : 'snippets')
 
   return (
-    <Container className="pt-4 lg:pt-12">
+    <Container className="pt-4 lg:pt-6">
       <PageHeader
         title={title}
         description={description}

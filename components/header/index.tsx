@@ -73,7 +73,7 @@ export function Header() {
           />
           <div className="flex items-center gap-2">
             <ThemeSwitcher />
-            <SearchButton />
+            {/* <SearchButton /> */}
             <MobileNav />
           </div>
         </div>

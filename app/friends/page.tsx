@@ -17,7 +17,7 @@ export default async function HomePage() {
     //   posts={allCoreContent(sortPosts(allBlogs)).slice(0, MAX_POSTS_DISPLAY)}
     //   snippets={allCoreContent(sortPosts(allSnippets)).slice(0, MAX_SNIPPETS_DISPLAY)}
     // />
-    <Container as="div" className="pt-4 lg:pt-12">
+    <Container as="div" className="pt-4 lg:pt-6">
       <PageHeader
         title="Friends"
         description="My friends and the tech bloggers I recommend."
