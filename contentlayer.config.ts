@@ -66,7 +66,7 @@ function createTagCount(documents) {
       })
     }
   })
-  writeFileSync('./json/tag-data.json', JSON.stringify(tagCount))
+  writeFileSync('./json/tag-data.json', JSON.stringify(tagCount) + '\n')
 }
 
 function createSearchIndex(allBlogs) {
