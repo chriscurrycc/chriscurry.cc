@@ -28,10 +28,10 @@ export default function MemosGrid() {
   }
 
   return (
-    <div className="mx-auto max-w-6xl px-4 py-4">
-      <div className="columns-1 gap-6 md:columns-2">
+    <div className="mx-auto max-w-6xl py-4">
+      <div className="columns-1 gap-4 md:columns-2 lg:columns-3">
         {memos.map((memo) => (
-          <div key={memo.uid} className="mb-6 break-inside-avoid">
+          <div key={memo.uid} className="mb-4 break-inside-avoid">
             <MemoCard {...memo} />
           </div>
         ))}
