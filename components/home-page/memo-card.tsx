@@ -1,5 +1,6 @@
 import ReactMarkdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
+import remarkBreaks from 'remark-breaks'
 import rehypePrism from 'rehype-prism-plus'
 import { PhotoProvider, PhotoView } from 'react-photo-view'
 import { type Memo } from '~/app/api/memos/types'
@@ -88,7 +89,7 @@ function CodeBlock({ children, ...props }: any) {
   )
 }
 
-const remarkPluginsList: any[] = [[remarkGfm, { breaks: true }], remarkFixEmphasis, remarkHashtags]
+const remarkPluginsList: any[] = [remarkGfm, remarkBreaks, remarkFixEmphasis, remarkHashtags]
 const rehypePluginsList: any[] = [
   [rehypePrism, { ignoreMissing: true, defaultLanguage: 'plaintext' }],
 ]
